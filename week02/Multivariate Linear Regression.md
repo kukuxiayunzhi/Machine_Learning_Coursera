@@ -54,12 +54,88 @@ or
 
 These aren't exact requirements; we are only trying to speed things up. The goal is to get all input variables into roughly one of these ranges, give or take a few.
 
-Two techniques to help with this are **feature scaling** and **mean normalization**. Feature scaling involves dividing the input values by the range (i.e. the maximum value minus the minimum value) of the input variable, resulting in a new range of just 1. Mean normalization involves subtracting the average value for an input variable from the values for that input variable resulting in a new average value for the input variable of just zero. To implement both of these techniques, adjust your input values as shown in this formula:
+Two techniques to help with this are **`feature scaling`** and **`mean normalization`**. Feature scaling involves dividing the input values by the range (i.e. the maximum value minus the minimum value) of the input variable, resulting in a new range of just 1. Mean normalization involves subtracting the average value for an input variable from the values for that input variable resulting in a new average value for the input variable of just zero. To implement both of these techniques, adjust your input values as shown in this formula:
 
-x_i := \dfrac{x_i - \mu_i}{s_i}*x**i*:=*s**i**x**i*−*μ**i*
-
-Where *μ**i* is the **average** of all the values for feature (i) and s_i*s**i* is the range of values (max - min), or s_i*s**i* is the standard deviation.
+$$
+x_i := \dfrac{x_i - \mu_i}{s_i}
+$$
+Where **$μ_i$** is the **average** of all the values for feature (i) and $s_i$ is the range of values (max - min), or $s_i$ is the standard deviation.
 
 Note that dividing by the range, or dividing by the standard deviation, give different results. The quizzes in this course use range - the programming exercises use standard deviation.
 
-For example, if x_i*x**i* represents housing prices with a range of 100 to 2000 and a mean value of 1000, then, x_i := \dfrac{price-1000}{1900}*x**i*:=1900*p**r**i**c**e*−1000.
+For example, if $x_i$ represents housing prices with a range of 100 to 2000 and a mean value of 1000, then, 
+$$
+x_i := \dfrac{price-1000}{1900}
+$$
+
+## Gradient Descent in Practice II - Learning Rate
+
+**`Debugging gradient descent`.** Make a plot with *number of iterations* on the x-axis. Now plot the cost function, J(θ) over the number of iterations of gradient descent. If J(θ) ever increases, then you probably need to decrease α.
+
+**`Automatic convergence test.`** Declare convergence if J(θ) decreases by less than E in one iteration, where E is some small value such as $10^{−3}$. However in practice it's difficult to choose this threshold value.
+
+![2-2](./img/2-2.png)
+
+It has been proven that if learning rate α is sufficiently small, then J(θ) will decrease on every iteration.
+
+![2-3](./img/2-3.png)
+
+To summarize:
+
+If α is too small: slow convergence.
+
+If α is too large: ￼may not decrease on every iteration and thus may not converge.
+
+## Features and Polynomial Regression
+
+We can improve our features and the form of our hypothesis function in a couple different ways.
+
+We can **combine** multiple features into one. For example, we can combine $x_1$ and $x_2$ into a new feature $x_3$ by taking $x_1$⋅$x_2$.
+
+### **Polynomial Regression**
+
+Our hypothesis function need not be linear (a straight line) if that does not fit the data well.
+
+We can **change the behavior or curve** of our hypothesis function by making it a quadratic, cubic or square root function (or any other form).
+
+For example, if our hypothesis function is $h_\theta(x) = \theta_0 + \theta_1 x_1$ then we can create additional features based on $x_1$, to get the quadratic function $h_\theta(x) = \theta_0 + \theta_1 x_1 + \theta_2 x_1^2$ or the cubic function $h_\theta(x) = \theta_0 + \theta_1 x_1 + \theta_2 x_1^2 + \theta_3 x_1^3$
+
+In the cubic version, we have created new features $x_2$and $x_3$where $x_2 = x_1^2$ and $x_3 = x_1^3$.
+
+To make it a square root function, we could do: $h_\theta(x) = \theta_0 + \theta_1 x_1 + \theta_2 \sqrt{x_1}$
+
+One important thing to keep in mind is, **`if you choose your features this way then feature scaling becomes very important.`**
+
+eg. if $x_1$ has range 1 - 1000 then range of $x_1^2 $ becomes 1 - 1000000 and that of $x_1^3$ becomes 1 - 1000000000
+
+## Normal Equation
+
+Gradient descent gives one way of minimizing J. Let's discuss a second way of doing so, this time performing the minimization explicitly and without resorting to an iterative algorithm. In the "Normal Equation" method, we will minimize J by explicitly taking its derivatives with respect to the θj ’s, and setting them to zero. This allows us to find the optimum theta without iteration. The normal equation formula is given below:
+$$
+θ=(X^TX)^{−1}X^Ty
+$$
+![2-4](./img/2-4.png)
+
+There is **no need** to do feature scaling with the normal equation.
+
+The following is a comparison of gradient descent and the normal equation:
+
+|      Gradient Descent      |                 Normal Equation                 |
+| :------------------------: | :---------------------------------------------: |
+|    Need to choose alpha    |             No need to choose alpha             |
+|   Needs many iterations    |               No need to iterate                |
+|         O ($kn^2$)         | O ($n^3$), need to calculate inverse of $X^TX$. |
+| Works well when n is large |             Slow if n is very large             |
+
+With the normal equation, computing the inversion has complexity O(*n*3). So if we have a very large number of features, the normal equation will be slow. In practice, when n exceeds 10,000 it might be a good time to go from a normal solution to an iterative process.
+
+## Normal Equation Noninvertibility
+
+When implementing the normal equation in octave we want to use the 'pinv' function rather than 'inv.' The 'pinv' function will give you a value of $\theta$ even if $X^TX$ is not invertible.
+
+If $X^TX$ is **noninvertible,** the common causes might be having :
+
+- Redundant features, where two features are very closely related (i.e. they are linearly dependent)
+- Too many features (e.g. m ≤ n). In this case, delete some features or use "regularization" (to be explained in a later lesson).
+
+Solutions to the above problems include deleting a feature that is linearly dependent with another or deleting one or more features when there are too many features.
